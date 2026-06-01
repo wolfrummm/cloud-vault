@@ -18,9 +18,10 @@ export default function Backup({ token, API }) {
         axios.get(`${API}/api/admin/stats`, { headers })
       ])
       setLog(Array.isArray(logRes.data) ? logRes.data : [])
-      setStats(statsRes.data)
+      setStats(statsRes.data || null)
     } catch (err) {
       setError(err.response?.data || "Could not load backup data")
+      setLog([])
     } finally {
       setLoading(false)
     }
@@ -112,13 +113,13 @@ export default function Backup({ token, API }) {
               <span>Uploaded</span>
               <span>Status</span>
             </div>
-            {log.length === 0 ? (
+            {safeLog.length === 0 ? (
               <div className="row" style={{ gridTemplateColumns: "2fr 1fr 3fr 2fr 1.5fr" }}>
                 <span style={{ color: "#94a3b8" }}>No files found</span>
                 <span /><span /><span /><span />
               </div>
             ) : (
-              log.map(f => (
+              safeLog.map(f => (
                 <div className="row" key={f._id} style={{ gridTemplateColumns: "2fr 1fr 3fr 2fr 1.5fr" }}>
                   <span style={{ fontWeight: 500 }}>{f.filename}</span>
                   <span>

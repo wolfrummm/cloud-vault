@@ -1,0 +1,129 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* LEFT PANEL */
+
+.left {
+  flex: 1;
+  background: linear-gradient(135deg, #0b1220, #020617);
+  color: white;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.logo {
+  background: #1e40af;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.left h1 {
+  font-size: 40px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.highlight {
+  color: #38bdf8;
+}
+
+.subtitle {
+  color: #9ca3af;
+  margin-bottom: 30px;
+  max-width: 400px;
+}
+
+.features {
+  list-style: none;
+  color: #cbd5e1;
+}
+
+.features li {
+  margin-bottom: 10px;
+}
+
+.footer {
+  margin-top: auto;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* RIGHT PANEL */
+
+.right {
+  flex: 1;
+  background: #f9fafb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 350px;
+}
+
+.card h2 {
+  margin-bottom: 5px;
+}
+
+.form-sub {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.card label {
+  font-size: 14px;
+  margin-top: 15px;
+  display: block;
+}
+
+.card input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.card button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.card button:hover {
+  background: #1d4ed8;
+}
+
+.signup {
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+  color: #6b7280;
+}

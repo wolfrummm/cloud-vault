@@ -9,8 +9,7 @@ export default function Versioning({ token, API, files }) {
 
   const headers = { Authorization: token }
 
-  const uniqueFilenames = [...new Set(files.map(f => f.filename))].sort()
-
+  const uniqueFilenames = [...new Set((files || []).map(f => f.filename))].sort()
   const loadVersions = async (filename) => {
     if (!filename) return
     setLoading(true)

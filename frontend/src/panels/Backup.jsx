@@ -2,10 +2,10 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 
 export default function Backup({ token, API }) {
-  const [log, setLog]         = useState([])
-  const [stats, setStats]     = useState(null)
+  const [log, setLog] = useState([])
+  const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState("")
+  const [error, setError] = useState("")
 
   const headers = { Authorization: token }
 
@@ -15,9 +15,9 @@ export default function Backup({ token, API }) {
     try {
       const [logRes, statsRes] = await Promise.all([
         axios.get(`${API}/api/admin/replication-log`, { headers }),
-        axios.get(`${API}/api/admin/stats`,           { headers })
+        axios.get(`${API}/api/admin/stats`, { headers })
       ])
-      setLog(logRes.data)
+      setLog(Array.isArray(logRes.data) ? logRes.data : [])
       setStats(statsRes.data)
     } catch (err) {
       setError(err.response?.data || "Could not load backup data")
@@ -28,9 +28,10 @@ export default function Backup({ token, API }) {
 
   useEffect(() => { loadData() }, [])
 
-  const successCount = log.filter(f => f.isReplicated).length
-  const failCount    = log.length - successCount
-  const rate         = log.length ? Math.round((successCount / log.length) * 100) : 0
+  const safeLog = Array.isArray(log) ? log : []
+  const successCount = safeLog.filter(f => f.isReplicated).length
+  const failCount = safeLog.length - successCount
+  const rate = safeLog.length ? Math.round((successCount / safeLog.length) * 100) : 0
 
   return (
     <>
@@ -67,13 +68,13 @@ export default function Backup({ token, API }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
         {[
           {
-            name: process.env.REACT_APP_PRIMARY_BUCKET || "cloud-storage-primary",
+            name: "cloud-storage-primary",
             region: "us-east-1", label: "Primary",
             labelStyle: { background: "#d1fae5", color: "#065f46" },
             objects: stats?.totalVersions ?? "…", fill: "#2563eb", width: "50%"
           },
           {
-            name: process.env.REACT_APP_BACKUP_BUCKET || "cloud-storage-backup",
+            name: "cloud-storage-backup",
             region: "us-west-2", label: "Secondary (CRR)",
             labelStyle: { background: "#dbeafe", color: "#1e40af" },
             objects: successCount, fill: "#16a34a", width: rate + "%"
@@ -96,7 +97,7 @@ export default function Backup({ token, API }) {
       </div>
 
       {loading && <p style={{ color: "#64748b" }}>Loading replication log…</p>}
-      {error   && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
       {!loading && (
         <>
@@ -143,10 +144,10 @@ export default function Backup({ token, API }) {
       <div className="info-card" style={{ marginTop: 24 }}>
         <h3 style={{ marginBottom: 12, fontSize: 15 }}>Replication &amp; lifecycle settings</h3>
         {[
-          ["Synchronous CRR on every upload",   "CopyObject fires immediately after PutObject — no async delay",        true],
-          ["Replication status tracked in DB",   "isReplicated flag stored in MongoDB for audit and debugging",          true],
-          ["S3 Glacier transition (future)",     "Lifecycle policy to move old versions to cold storage after 90 days",  false],
-          ["Multi-region CRR (future)",          "Extend backup to eu-west-1 and ap-south-1 for geo-redundancy",         false]
+          ["Synchronous CRR on every upload", "CopyObject fires immediately after PutObject — no async delay", true],
+          ["Replication status tracked in DB", "isReplicated flag stored in MongoDB for audit and debugging", true],
+          ["S3 Glacier transition (future)", "Lifecycle policy to move old versions to cold storage after 90 days", false],
+          ["Multi-region CRR (future)", "Extend backup to eu-west-1 and ap-south-1 for geo-redundancy", false]
         ].map(([title, desc, active]) => (
           <div key={title} className="policy-row">
             <div>

@@ -5,7 +5,7 @@ import AccessControl from "./panels/AccessControl"
 import Versioning from "./panels/Versioning"
 import Backup from "./panels/Backup"
 
-const API = "https://secure-vault-production-1159.up.railway.app"
+const API = "http://localhost:5173/"
 
 export default function Dashboard({ token, logout }) {
   const [tab, setTab]     = useState("files")
@@ -16,7 +16,7 @@ export default function Dashboard({ token, logout }) {
       const res = await axios.get(`${API}/api/files/list`, {
         headers: { Authorization: token }
       })
-      setFiles(res.data)
+      setFiles(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
       console.error(err)
     }

@@ -7,7 +7,10 @@ const FileSchema = new mongoose.Schema({
   s3Key:        { type: String, required: true },
   mimeType:     { type: String, default: "" },
   isReplicated: { type: Boolean, default: false },
-  uploadedAt:   { type: Date, default: Date.now }
+  uploadedAt:   { type: Date, default: Date.now },
+  summary:      { type: String, default: "" },
+  tags:         { type: [String], default: [] },
+  category:     { type: String, default: "" }
 })
 
 module.exports = mongoose.model("File", FileSchema)

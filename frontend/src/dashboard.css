@@ -216,3 +216,79 @@ body {
 }
 
 .policy-row:last-child { border-bottom: none; }
+
+/* ── AI Metadata ── */
+.row > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ai-summary {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  white-space: normal;
+}
+
+.ai-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ai-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #e0f2fe;
+  color: #0369a1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ai-tag.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.ai-category {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.file-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.tag-pill {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  user-select: none;
+  border: none;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.tag-pill.active {
+  background: #2563eb;
+  color: #fff;
+}

@@ -5,11 +5,13 @@ import AccessControl from "./panels/AccessControl"
 import Versioning from "./panels/Versioning"
 import Backup from "./panels/Backup"
 
-const API = "http://localhost:5173/"
+const API = "http://localhost:5000"
 
 export default function Dashboard({ token, logout }) {
-  const [tab, setTab]     = useState("files")
-  const [files, setFiles] = useState([])
+  const [tab, setTab]             = useState("files")
+  const [files, setFiles]         = useState([])
+  const [filterTag, setFilterTag] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   const loadFiles = async () => {
     try {
@@ -26,15 +28,19 @@ export default function Dashboard({ token, logout }) {
     const selectedFile = e.target.files[0]
     if (!selectedFile) return
     try {
+      setUploading(true)
       const form = new FormData()
       form.append("file", selectedFile)
       await axios.post(`${API}/api/files/upload`, form, {
         headers: { Authorization: token }
       })
-      loadFiles()
+      await loadFiles()
     } catch (err) {
       console.error(err)
       alert("Upload failed")
+    } finally {
+      setUploading(false)
+      e.target.value = ""
     }
   }
 
@@ -80,13 +86,16 @@ export default function Dashboard({ token, logout }) {
     return type.split("/")[1]?.toUpperCase() || "FILE"
   }
 
+  const allTags      = [...new Set(files.flatMap(f => f.tags || []))]
+  const visibleFiles = filterTag ? files.filter(f => f.tags?.includes(filterTag)) : files
+
   useEffect(() => { loadFiles() }, [])
 
   const navItems = [
-    { key: "files",      label: "File Manager"    },
-    { key: "access",     label: "Access Control"  },
-    { key: "versioning", label: "Versioning"       },
-    { key: "backup",     label: "Backup"           }
+    { key: "files",      label: "File Manager"   },
+    { key: "access",     label: "Access Control" },
+    { key: "versioning", label: "Versioning"      },
+    { key: "backup",     label: "Backup"          }
   ]
 
   return (
@@ -112,7 +121,6 @@ export default function Dashboard({ token, logout }) {
       {/* MAIN */}
       <div className="main">
 
-        {/* ── File Manager ── */}
         {tab === "files" && (
           <>
             <div className="topbar">
@@ -127,11 +135,32 @@ export default function Dashboard({ token, logout }) {
                   style={{ display: "none" }}
                   onChange={handleFileSelect}
                 />
-                <button onClick={() => document.getElementById("fileInput").click()}>
-                  Upload File
+                <button
+                  onClick={() => document.getElementById("fileInput").click()}
+                  disabled={uploading}
+                  style={{ opacity: uploading ? 0.7 : 1 }}
+                >
+                  {uploading ? "Analyzing…" : "Upload File"}
                 </button>
               </div>
             </div>
+
+            {/* Tag filter pills */}
+            {allTags.length > 0 && (
+              <div className="tag-filter-bar">
+                <span
+                  className={`tag-pill ${filterTag === "" ? "active" : ""}`}
+                  onClick={() => setFilterTag("")}
+                >All</span>
+                {allTags.map(tag => (
+                  <span
+                    key={tag}
+                    className={`tag-pill ${filterTag === tag ? "active" : ""}`}
+                    onClick={() => setFilterTag(tag === filterTag ? "" : tag)}
+                  >#{tag}</span>
+                ))}
+              </div>
+            )}
 
             <div className="table">
               <div className="table-header">
@@ -141,17 +170,46 @@ export default function Dashboard({ token, logout }) {
                 <span>Action</span>
               </div>
 
-              {files.length === 0 ? (
+              {visibleFiles.length === 0 ? (
                 <div className="row">
-                  <span style={{ color: "#94a3b8" }}>No files uploaded yet</span>
+                  <span style={{ color: "#94a3b8" }}>
+                    {filterTag ? `No files tagged #${filterTag}` : "No files uploaded yet"}
+                  </span>
                   <span>–</span><span>–</span><span>–</span>
                 </div>
               ) : (
-                files.map(file => (
+                visibleFiles.map(file => (
                   <div key={file._id} className="row">
-                    <span className="type-badge">{formatType(file.mimeType)}</span>
+
+                    {/* Name + AI metadata */}
+                    <div className="file-cell">
+                      <div className="file-name-row">
+                        <span className="type-badge">{formatType(file.mimeType)}</span>
+                        <span className="file-name">{file.filename}</span>
+                        {file.category && (
+                          <span className="ai-category">{file.category}</span>
+                        )}
+                      </div>
+
+                      {file.summary && (
+                        <p className="ai-summary">{file.summary}</p>
+                      )}
+
+                      {file.tags?.length > 0 && (
+                        <div className="ai-tags">
+                          {file.tags.map(tag => (
+                            <span
+                              key={tag}
+                              className={`ai-tag ${filterTag === tag ? "active" : ""}`}
+                              onClick={() => setFilterTag(tag === filterTag ? "" : tag)}
+                            >#{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <span className="badge">v{file.version}</span>
-                    <span>{new Date(file.uploadedAt).toLocaleString()}</span>
+                    <span className="date-cell">{new Date(file.uploadedAt).toLocaleString()}</span>
                     <div className="actions">
                       <button onClick={() => download(file._id, file.filename)}>Download</button>
                       <button className="delete-btn" onClick={() => deleteFile(file._id)}>Delete</button>

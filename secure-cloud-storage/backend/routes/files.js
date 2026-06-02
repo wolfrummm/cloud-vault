@@ -4,14 +4,54 @@ const {
   GetObjectCommand,
   DeleteObjectCommand
 } = require("@aws-sdk/client-s3")
-const s3     = require("../config/s3")
+const s3             = require("../config/s3")
 const { v4: uuidv4 } = require("uuid")
-const File   = require("../models/File")
-const auth   = require("../middleware/auth")
-const router = require("express").Router()
-const multer = require("multer")
+const File           = require("../models/File")
+const auth           = require("../middleware/auth")
+const router         = require("express").Router()
+const multer         = require("multer")
+const Groq           = require("groq-sdk")
 
 const upload = multer({ storage: multer.memoryStorage() })
+const groq   = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
+// ── AI enrichment ─────────────────────────────────────────────────────────────
+async function enrichFileWithAI(buffer, mimeType, filename) {
+  const isText = mimeType.includes("text") ||
+    /\.(txt|md|csv|json|js|ts|jsx|tsx|html|css|xml|yaml|yml)$/i.test(filename)
+
+  let contentPreview = `Filename: ${filename}\nType: ${mimeType}`
+  if (isText) {
+    contentPreview += `\nContent preview:\n${buffer.toString("utf8").slice(0, 2000)}`
+  }
+
+  const response = await groq.chat.completions.create({
+    model:       "llama-3.3-70b-versatile",
+    max_tokens:  200,
+    temperature: 0.3,
+    messages: [{
+      role:    "user",
+      content: `Analyze this uploaded file. Return ONLY a raw JSON object — no markdown, no backticks, no explanation.
+
+${contentPreview}
+
+Required shape:
+{"summary":"1-2 sentence description of what this file is (max 120 chars)","tags":["tag1","tag2","tag3"],"category":"one of: Finance, Legal, Design, Engineering, HR, Marketing, Personal, Other"}`
+    }]
+  })
+
+  const raw = response.choices[0].message.content.trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i,     "")
+    .replace(/```\s*$/i,     "")
+    .trim()
+
+  console.log("=== GROQ RAW RESPONSE ===")
+  console.log(raw)
+  console.log("=========================")
+
+  return JSON.parse(raw)
+}
 
 // ── Upload ────────────────────────────────────────────────────────────────────
 router.post("/upload", auth, upload.single("file"), async (req, res) => {
@@ -43,17 +83,37 @@ router.post("/upload", auth, upload.single("file"), async (req, res) => {
       console.error("Replication failed:", replErr.message)
     }
 
+    // AI enrichment — upload still succeeds even if this fails
+    let aiMeta = { summary: "", tags: [], category: "" }
+    try {
+      aiMeta = await enrichFileWithAI(req.file.buffer, req.file.mimetype, filename)
+    } catch (aiErr) {
+      console.error("AI enrichment failed:", aiErr.message)
+    }
+
+    console.log("=== AI META ===", JSON.stringify(aiMeta))
+
     const newFile = new File({
       userId,
       filename,
       version,
-      s3Key: key,
-      mimeType: req.file.mimetype,
-      isReplicated
+      s3Key:       key,
+      mimeType:    req.file.mimetype,
+      isReplicated,
+      summary:     aiMeta.summary,
+      tags:        aiMeta.tags,
+      category:    aiMeta.category
     })
     await newFile.save()
 
-    res.status(201).json({ message: "File uploaded to cloud with replication", version, isReplicated })
+    res.status(201).json({
+      message: "File uploaded to cloud with replication",
+      version,
+      isReplicated,
+      summary:  aiMeta.summary,
+      tags:     aiMeta.tags,
+      category: aiMeta.category
+    })
 
   } catch (err) {
     console.error(err)

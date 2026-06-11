@@ -9,7 +9,6 @@ connectDB()
 
 app.use(cors({
   origin: [
-    "https://secure-vault-sepia-ten.vercel.app",
     "http://localhost:5173"
   ],
   credentials: true

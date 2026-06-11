@@ -5,7 +5,7 @@ import AccessControl from "./panels/AccessControl"
 import Versioning from "./panels/Versioning"
 import Backup from "./panels/Backup"
 
-const API = "cloud-vault-production-1e70.up.railway.app"
+const API = "https://cloud-vault-production-1e70.up.railway.app"
 
 export default function Dashboard({ token, logout }) {
   const [tab, setTab]             = useState("files")
